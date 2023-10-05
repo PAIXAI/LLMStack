@@ -21,7 +21,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            href="https://trypromptly.com"
+            href="https://paix.cloud"
           >
             Try Cloud Offering
           </Link>
@@ -31,7 +31,7 @@ function HomepageHeader() {
         </div>
         <div className={styles.githubButtons}>
           <GitHubButton
-            href="https://github.com/trypromptly/LLMStack"
+            href="https://github.com/paixai/LLMStack"
             data-size="large"
             data-show-count="true"
             aria-label="Star trypromptly/LLMStack on GitHub"
@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <Layout
       title={`${siteConfig.title} | ${siteConfig.tagline}`}
-      description="No-code platform to build generative AI apps, chatbots and agents with your data."
+      description="PAIX - No-code platform to build generative AI apps, chatbots and agents with your data."
     >
       <HomepageHeader />
       <main>
