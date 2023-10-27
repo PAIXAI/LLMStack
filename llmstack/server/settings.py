@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'llmstack.datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
     'llmstack.base.apps.BaseConfig',
+    'llmstack.connections.apps.ConnectionsConfig',
     'llmstack.organizations.apps.OrganizationsConfig',
     'flags',
     'allauth',
@@ -114,8 +115,19 @@ DATABASES = {
     },
 }
 
-DEFAULT_VECTOR_DATABASE = os.getenv('DEFAULT_VECTOR_DATABASE', 'weaviate')
-DEFAULT_VECTOR_DATABASE_PATH = os.getenv('DEFAULT_VECTOR_DATABASE_PATH')
+VECTOR_DATABASES = {
+    'default': {
+        'ENGINE': '{}'.format(
+            os.getenv('VECTOR_DATABASE_ENGINE', 'chroma'),
+        ),
+        'NAME': os.getenv('VECTOR_DATABASE_NAME', './llmstack.chromadb',),
+        'HOST': os.getenv('VECTOR_DATABASE_HOST', 'http://weaviate:8080'),
+        'USER': os.getenv('VECTOR_DATABASE_USERNAME', None),
+        'PASSWORD': os.getenv('VECTOR_DATABASE_PASSWORD', None),
+        'AUTH_TOKEN': os.getenv('VECTOR_DATABASE_AUTH_TOKEN', None),
+        'API_KEY': os.getenv('VECTOR_DATABASE_API_KEY', None),
+    }
+}
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -164,8 +176,26 @@ STATIC_URL = os.getenv('STATIC_URL', 'static/')
 STATICFILES_DIRS = [
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 ]
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-DEFAULT_FILE_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+GENERATEDFILES_ROOT = os.getenv(
+    'GENERATEDFILES_ROOT', os.path.join(BASE_DIR, 'generatedfiles'))
+GENERATEDFILES_URL = os.getenv(
+    'GENERATEDFILES_URL', '/generatedfiles/')
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "generatedfiles": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": GENERATEDFILES_ROOT,
+            "base_url": GENERATEDFILES_URL,
+        }
+    }
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -376,7 +406,23 @@ PROVIDERS = [
         'datasource_processors_exclude': [],
         'slug': 'stabilityai',
     },
+    {
+        'name': 'LinkedIn',
+        'processor_packages': ['llmstack.processors.providers.linkedin'],
+        'slug': 'linkedin',
+    }
 ]
+
+# Include networking providers if they are enabled
+try:
+    import jnpr.junos
+    PROVIDERS.append({
+        'name': 'Juniper',
+        'processor_packages': ['llmstack.processors.providers.juniper'],
+        'slug': 'juniper',
+    })
+except ImportError:
+    pass
 
 PROCESSOR_PROVIDERS = sum(list(
     map(lambda entry: entry['processor_packages'], filter(

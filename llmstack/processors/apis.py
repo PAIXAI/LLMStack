@@ -1,9 +1,12 @@
 import asyncio
+from datetime import datetime
 import json
 import logging
 import uuid
 from collections import namedtuple
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage
+from flags.state import flag_enabled
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login
@@ -389,6 +392,40 @@ class HistoryViewSet(viewsets.ModelViewSet):
             )
 
         return DRFResponse(response.data)
+
+    def get_csv(self, queryset, brief):
+        header = ['Created At', 'Session', 'Request', 'Response']
+        if not brief:
+            header.extend(['Request UUID', 'Request User Email', 'Request IP',
+                          'Request Location', 'Request User Agent', 'Request Content Type'])
+        yield ','.join(header) + '\n'
+        for entry in queryset:
+            output = [entry.created_at.strftime('%Y-%m-%d %H:%M:%S'), entry.session_key if entry.session_key else '', json.dumps(
+                entry.request_body), json.dumps(entry.response_body)]
+            if not brief:
+                output.extend([entry.request_uuid, entry.request_user_email, entry.request_ip,
+                               entry.request_location, entry.request_user_agent, entry.request_content_type])
+            yield ','.join(output) + '\n'
+
+    def download(self, request):
+        if not flag_enabled('CAN_EXPORT_HISTORY', request=request):
+            return HttpResponseForbidden('You do not have permission to download history')
+
+        app_uuid = request.data.get('app_uuid', None)
+        before = request.data.get('before', None)
+        count = request.data.get('count', 25)
+        brief = request.data.get('brief', True)
+
+        if count > 100:
+            count = 100
+
+        queryset = RunEntry.objects.all().filter(
+            app_uuid=app_uuid, owner=request.user, created_at__lt=before).order_by('-created_at')[:count]
+        response = StreamingHttpResponse(
+            streaming_content=self.get_csv(queryset, brief), content_type='text/csv',
+        )
+        response['Content-Disposition'] = f'attachment; filename="history_{app_uuid}_{before}_{count}.csv"'
+        return response
 
     def list_sessions(self, request):
         app_uuid = request.GET.get('app_uuid', None)

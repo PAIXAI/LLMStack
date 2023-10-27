@@ -129,9 +129,9 @@ function SavedAppActions(props) {
           <Button
             sx={{ textTransform: "none" }}
             onClick={() => navigate(`/apps/${app.uuid}/integrations/twilio`)}
-            >
+          >
             Twilio
-            </Button>
+          </Button>
         </ButtonGroup>
       </Stack>
     </Box>

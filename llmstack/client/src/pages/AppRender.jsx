@@ -15,6 +15,7 @@ import {
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useRecoilValue } from "recoil";
 import { isMobileState, isLoggedInState } from "../data/atoms";
+import { AgentRenderer } from "../components/apps/AgentRenderer";
 import { WebChatRender } from "../components/apps/WebChatRender";
 import { WebAppRenderer } from "../components/apps/WebAppRenderer";
 import logo from "../assets/logo.png";
@@ -80,6 +81,8 @@ function AppRenderPage({ headless = false }) {
 
   return app?.type?.slug === "text-chat" && embed && chatBubble ? (
     <WebChatRender app={app} isMobile={isMobile} embed={embed} ws={ws} />
+  ) : app?.type?.slug === "agent" && embed && chatBubble ? (
+    <AgentRenderer app={app} isMobile={isMobile} embed={embed} ws={ws} />
   ) : (
     <Stack container spacing={2}>
       {!embed && (
@@ -157,6 +160,9 @@ function AppRenderPage({ headless = false }) {
         {app?.type?.slug === "text-chat" && (
           <WebChatRender app={app} isMobile={isMobile} ws={ws} />
         )}
+        {app?.type?.slug === "agent" && (
+          <AgentRenderer app={app} isMobile={isMobile} ws={ws} />
+        )}
       </Box>
       <Box
         sx={{
@@ -167,14 +173,20 @@ function AppRenderPage({ headless = false }) {
           paddingTop: "10px",
         }}
       >
-        {headless && app.has_footer && (
-          <Typography sx={{ textAlign: "center" }} variant="caption">
-            Powered by{" "}
-            <a href="https://trypromptly.com" target="_blank" rel="noreferrer">
-              Promptly
-            </a>
-          </Typography>
-        )}
+        {headless &&
+          (app.has_footer ||
+            !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT) && (
+            <Typography sx={{ textAlign: "center" }} variant="caption">
+              Powered by{" "}
+              <a
+                href="https://trypromptly.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Promptly
+              </a>
+            </Typography>
+          )}
       </Box>
     </Stack>
   );

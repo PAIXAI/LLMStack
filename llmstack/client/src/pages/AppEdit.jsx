@@ -38,7 +38,7 @@ import { AppRunHistory } from "../components/apps/AppRunHistory";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
 import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
-import {AppTwilioConfigEditor} from "../components/apps/AppTwilioConfigEditor";
+import { AppTwilioConfigEditor } from "../components/apps/AppTwilioConfigEditor";
 import { ReactComponent as CodeIcon } from "../assets/images/icons/code.svg";
 import { ReactComponent as DiscordIcon } from "../assets/images/icons/discord.svg";
 import { ReactComponent as IntegrationsIcon } from "../assets/images/icons/integrations.svg";
@@ -250,16 +250,33 @@ export default function AppEditPage(props) {
         config: app?.data?.config,
         app_type: app?.type?.id,
         type_slug: app?.type?.slug,
-        input_fields: appInputFields,
-        output_template: appOutputTemplate,
+        input_fields:
+          app?.type?.slug === "agent"
+            ? [
+                {
+                  name: "task",
+                  title: "Task",
+                  description: "What do you want the agent to perform?",
+                  type: "string",
+                  required: true,
+                },
+              ]
+            : appInputFields,
+        output_template:
+          app?.type?.slug === "agent"
+            ? { markdown: "{{agent}}" }
+            : appOutputTemplate,
         web_config: app?.web_config || {},
         slack_config: app?.slack_config || {},
         discord_config: app?.discord_config || {},
         twilio_config: app?.twilio_config || {},
         processors: processors.map((processor, index) => ({
           id: `_inputs${index + 1}`,
+          name: processor.name || processor.api_backend?.name,
           description:
-            processor.description || processor.api_backend?.description,
+            app?.data?.processors[index]?.description ||
+            processor.description ||
+            processor.api_backend?.description,
           provider_slug:
             processor.api_backend?.api_provider?.slug ||
             processor.provider_slug,
@@ -267,6 +284,7 @@ export default function AppEditPage(props) {
             processor.api_backend?.slug || processor.processor_slug,
           config: processor.config,
           input: processor.input,
+          output_template: processor.output_template || {},
         })),
       };
 
@@ -586,12 +604,12 @@ export default function AppEditPage(props) {
             )}
             {selectedMenuItem === "integrations/twilio" && (
               <AppTwilioConfigEditor
-               app={app}
-               twilioConfig={app?.twilio_config || {}}
-               setTwilioConfig={(twilioConfig) => {
-                 setApp((app) => ({ ...app, twilio_config: twilioConfig }));
-               }}
-               saveApp={saveApp}
+                app={app}
+                twilioConfig={app?.twilio_config || {}}
+                setTwilioConfig={(twilioConfig) => {
+                  setApp((app) => ({ ...app, twilio_config: twilioConfig }));
+                }}
+                saveApp={saveApp}
               />
             )}
             {selectedMenuItem === "template" && (

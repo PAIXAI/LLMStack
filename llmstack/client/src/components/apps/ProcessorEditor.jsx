@@ -187,6 +187,7 @@ export function ProcessorEditor({
   activeStep,
   setActiveStep,
   outputSchemas,
+  isTool,
 }) {
   const processor = processors[index];
   const apiBackend = processor?.api_backend;
@@ -262,7 +263,7 @@ export function ProcessorEditor({
   ) : (
     <AppStepCard
       icon={apiBackend?.icon || apiBackend?.api_provider?.name}
-      title={apiBackend?.name}
+      title={processors[index].name || apiBackend?.name}
       description={processors[index].description || apiBackend?.description}
       setDescription={(description) => {
         processors[index].description = description || apiBackend?.description;
@@ -271,7 +272,7 @@ export function ProcessorEditor({
       stepNumber={index + 2}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
-      errors={errors}
+      errors={isTool ? [] : errors}
       action={
         index === processors.length - 1 ? (
           <DeleteIcon
@@ -359,6 +360,32 @@ export function ProcessorEditor({
             />
           </AccordionDetails>
         </Accordion>
+        {isTool && (
+          <Accordion defaultExpanded={true}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="config-content"
+              id="config-header"
+              style={{ backgroundColor: "#dce8fb" }}
+            >
+              <Typography>Output Template</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <TextFieldWithVars
+                label="Output Template"
+                multiline
+                value={processor?.output_template?.markdown || ""}
+                onChange={(text) => {
+                  processors[index].output_template = { markdown: text };
+                  setProcessors([...processors]);
+                }}
+                sx={{ width: "100%" }}
+                placeholder="Use the {{ }} syntax to reference data from the processor's own output."
+                schemas={outputSchemas.slice(index + 1, index + 2)}
+              />
+            </AccordionDetails>
+          </Accordion>
+        )}
         <Accordion>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
